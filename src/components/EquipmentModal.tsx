@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EquipmentCategory, EquipmentItem } from '../types';
 import { EQUIPMENT_ITEMS } from '../data/equipment';
 import { X, Sparkles, Shield, Heart, Moon } from 'lucide-react';
+import { SleepDiorama } from './SleepDiorama';
 
 interface EquipmentModalProps {
   isOpen: boolean;
@@ -87,34 +88,56 @@ export const EquipmentModal: React.FC<EquipmentModalProps> = ({
         </div>
 
         {/* Current Total Stats Summary Bar */}
-        <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-950/40 border-b border-purple-500/20 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-xs">
-          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 sm:p-2 rounded-xl border border-white/5">
+        <div className="px-4 sm:px-6 py-2 sm:py-2.5 bg-purple-950/40 border-b border-purple-500/20 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 rounded-xl border border-white/5">
             <Sparkles size={14} className="text-amber-400 flex-shrink-0" />
             <div>
               <div className="text-slate-400 text-[9px] sm:text-[10px]">Comfort (Độ Êm)</div>
               <div className="font-bold text-amber-300 text-xs sm:text-sm">+{totalStats.comfort} EXP/m</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 sm:p-2 rounded-xl border border-white/5">
+          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 rounded-xl border border-white/5">
             <Heart size={14} className="text-rose-400 flex-shrink-0" />
             <div>
               <div className="text-slate-400 text-[9px] sm:text-[10px]">Warmth (Ấm Áp)</div>
               <div className="font-bold text-rose-300 text-xs sm:text-sm">+{totalStats.warmth} Cozy</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 sm:p-2 rounded-xl border border-white/5">
+          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 rounded-xl border border-white/5">
             <Shield size={14} className="text-teal-400 flex-shrink-0" />
             <div>
               <div className="text-slate-400 text-[9px] sm:text-[10px]">Serenity (Tĩnh Lặng)</div>
               <div className="font-bold text-teal-300 text-xs sm:text-sm">+{totalStats.serenity} Calm</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 sm:p-2 rounded-xl border border-white/5">
+          <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 rounded-xl border border-white/5">
             <Moon size={14} className="text-fuchsia-400 flex-shrink-0" />
             <div>
               <div className="text-slate-400 text-[9px] sm:text-[10px]">Aesthetic (Thẩm Mỹ)</div>
               <div className="font-bold text-fuchsia-300 text-xs sm:text-sm">+{totalStats.aesthetic} Dream Luck</div>
             </div>
+          </div>
+        </div>
+
+        {/* Live Visual Diorama Preview (Instant visual feedback as user changes items) */}
+        <div className="bg-slate-950/80 border-b border-white/10 px-4 py-1.5 flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="text-[10px] sm:text-[11px] text-purple-300 font-mono flex items-center gap-1.5">
+            <span>✨</span>
+            <span>Hình ảnh thực tế khi kết hợp trang bị:</span>
+            <span className="text-white font-semibold truncate max-w-[200px] sm:max-w-none">
+              {equippedBed.name} • {equippedBlanket.name} • {equippedCompanion.name}
+            </span>
+          </div>
+          <div className="scale-[0.7] sm:scale-85 -my-7 sm:-my-5 pointer-events-none">
+            <SleepDiorama
+              equippedBed={equippedBed}
+              equippedPillow={equippedPillow}
+              equippedBlanket={equippedBlanket}
+              equippedPajamas={equippedPajamas}
+              equippedCompanion={equippedCompanion}
+              isSleeping={false}
+              onOpenEquipmentModal={() => {}}
+            />
           </div>
         </div>
 

@@ -540,6 +540,7 @@ export function App() {
           equippedPajamas={equippedPajamas}
           equippedCompanion={equippedCompanion}
           isSleeping={session.status === 'sleeping'}
+          onOpenEquipmentModal={() => setShowEquipmentModal(true)}
         />
 
         {/* Dashboard Bottom Action Bar */}

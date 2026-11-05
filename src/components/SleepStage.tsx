@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { LocationInfo, WeatherType, LightingType, EquipmentItem } from '../types';
+import { SleepDiorama } from './SleepDiorama';
 
 interface SleepStageProps {
   location: LocationInfo;
@@ -11,6 +12,7 @@ interface SleepStageProps {
   equippedPajamas: EquipmentItem;
   equippedCompanion: EquipmentItem;
   isSleeping: boolean;
+  onOpenEquipmentModal: () => void;
 }
 
 export const SleepStage: React.FC<SleepStageProps> = ({
@@ -22,7 +24,8 @@ export const SleepStage: React.FC<SleepStageProps> = ({
   equippedBlanket,
   equippedPajamas,
   equippedCompanion,
-  isSleeping
+  isSleeping,
+  onOpenEquipmentModal
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -306,73 +309,68 @@ export const SleepStage: React.FC<SleepStageProps> = ({
       {/* 3. Lighting Overlay */}
       <div className={`absolute inset-0 z-15 pointer-events-none transition-colors duration-1000 ${getLightingOverlayClass()}`} />
 
-      {/* 4. Center Sleep Sanctuary (Avatar + Bed + Blanket + Pet) */}
-      <div className="relative z-20 flex flex-col items-center justify-center -mt-4 sm:-mt-6">
-        {/* Main Bed Structure */}
-        <div className="relative group flex flex-col items-center">
-          {/* Bed Base */}
-          <div className="w-[270px] sm:w-80 h-26 sm:h-32 rounded-2xl sm:rounded-3xl bg-slate-800/90 border-2 border-white/20 shadow-2xl flex flex-col justify-between p-2.5 sm:p-3 relative overflow-hidden backdrop-blur-md">
-            {/* Bed Headboard / Pillow Area */}
-            <div className="flex items-center justify-between w-full px-1.5 sm:px-2">
-              <span className="text-[11px] sm:text-xs font-semibold text-slate-300 flex items-center gap-1 bg-black/40 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-white/10">
-                {equippedBed.icon} <span className="truncate max-w-[100px] sm:max-w-none">{equippedBed.name}</span>
-              </span>
-              {/* Equipped Pillow */}
-              <div className="flex items-center gap-1 bg-amber-500/20 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 text-[10px] sm:text-xs text-amber-200">
-                <span>{equippedPillow.icon}</span>
-                <span className="hidden sm:inline text-[11px]">{equippedPillow.name}</span>
-              </div>
-            </div>
+      {/* 4. Center Sleep Sanctuary (Illustrated Diorama: Bed, Pillow, Character, Blanket, Pet) */}
+      <div className="relative z-20 flex flex-col items-center justify-center -mt-2 sm:-mt-4">
+        {/* Rich Layered 2D Diorama */}
+        <SleepDiorama
+          equippedBed={equippedBed}
+          equippedPillow={equippedPillow}
+          equippedBlanket={equippedBlanket}
+          equippedPajamas={equippedPajamas}
+          equippedCompanion={equippedCompanion}
+          isSleeping={isSleeping}
+          onOpenEquipmentModal={onOpenEquipmentModal}
+        />
 
-            {/* Avatar & Sleeping Animation */}
-            <div className="flex items-center justify-center my-auto relative">
-              {/* Sleeping Breathing Avatar */}
-              <div
-                className={`flex flex-col items-center transition-transform duration-700 ${
-                  isSleeping ? 'animate-breathe' : 'animate-float'
-                }`}
-              >
-                <div className="relative flex items-center justify-center">
-                  {/* Pajama Icon & Face */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-purple-500/30 to-pink-500/30 border-2 border-white/30 flex items-center justify-center text-2xl sm:text-3xl shadow-lg relative">
-                    {isSleeping ? '😴' : '😌'}
-                    <span className="absolute -bottom-1 -right-1 text-sm sm:text-base">{equippedPajamas.icon}</span>
-                  </div>
-                  {/* Floating 'zZz' indicator when sleeping */}
-                  {isSleeping && (
-                    <div className="absolute -top-5 -right-5 sm:-top-6 sm:-right-6 text-xs sm:text-sm font-bold text-purple-300 flex flex-col animate-bounce">
-                      <span className="text-[10px] sm:text-xs">z</span>
-                      <span className="text-xs sm:text-sm -mt-1 font-mono">Z</span>
-                      <span className="text-sm sm:text-base -mt-1 font-extrabold text-amber-300">Z</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Equipped Pet / Companion beside bed */}
-              <div className="absolute -right-2 sm:-right-4 -bottom-1 flex items-center bg-black/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border border-white/10 text-[10px] sm:text-xs text-slate-200 animate-float" style={{ animationDelay: '1.5s' }}>
-                <span className="text-base sm:text-lg mr-1">{equippedCompanion.icon}</span>
-                <span className="text-[9px] sm:text-[10px] hidden sm:inline">{equippedCompanion.name}</span>
-              </div>
-            </div>
-
-            {/* Blanket covering bottom */}
-            <div className="w-full bg-gradient-to-r from-purple-600/70 via-indigo-600/70 to-purple-600/70 border-t-2 border-purple-400/40 rounded-b-xl sm:rounded-b-2xl py-1 sm:py-1.5 px-2.5 sm:px-3 flex items-center justify-between text-[11px] sm:text-xs text-purple-100 shadow-md">
-              <span className="flex items-center gap-1 font-medium truncate max-w-[140px] sm:max-w-none">
-                {equippedBlanket.icon} {equippedBlanket.name}
-              </span>
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider bg-black/40 px-1.5 py-0.5 rounded text-purple-200 flex-shrink-0">
-                {equippedBlanket.tag}
-              </span>
-            </div>
-          </div>
+        {/* Floating Quick Equipment Badges (Interactive 1-Click to change) */}
+        <div className="mt-1 sm:mt-2 flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 px-2 max-w-md">
+          <button
+            onClick={onOpenEquipmentModal}
+            className="flex items-center gap-1 bg-black/60 hover:bg-purple-900/60 border border-white/10 hover:border-purple-400/50 px-2 py-0.5 rounded-full text-[10px] text-slate-300 transition active:scale-95 shadow-sm"
+            title="Đổi Giường"
+          >
+            <span>{equippedBed.icon}</span>
+            <span className="font-medium text-white truncate max-w-[70px] sm:max-w-none">{equippedBed.name}</span>
+          </button>
+          <button
+            onClick={onOpenEquipmentModal}
+            className="flex items-center gap-1 bg-black/60 hover:bg-purple-900/60 border border-white/10 hover:border-purple-400/50 px-2 py-0.5 rounded-full text-[10px] text-slate-300 transition active:scale-95 shadow-sm"
+            title="Đổi Gối"
+          >
+            <span>{equippedPillow.icon}</span>
+            <span className="font-medium text-white truncate max-w-[70px] sm:max-w-none">{equippedPillow.name}</span>
+          </button>
+          <button
+            onClick={onOpenEquipmentModal}
+            className="flex items-center gap-1 bg-black/60 hover:bg-purple-900/60 border border-white/10 hover:border-purple-400/50 px-2 py-0.5 rounded-full text-[10px] text-slate-300 transition active:scale-95 shadow-sm"
+            title="Đổi Chăn"
+          >
+            <span>{equippedBlanket.icon}</span>
+            <span className="font-medium text-white truncate max-w-[70px] sm:max-w-none">{equippedBlanket.name}</span>
+          </button>
+          <button
+            onClick={onOpenEquipmentModal}
+            className="flex items-center gap-1 bg-black/60 hover:bg-purple-900/60 border border-white/10 hover:border-purple-400/50 px-2 py-0.5 rounded-full text-[10px] text-slate-300 transition active:scale-95 shadow-sm"
+            title="Đổi Đồ Ngủ"
+          >
+            <span>{equippedPajamas.icon}</span>
+            <span className="font-medium text-white truncate max-w-[70px] sm:max-w-none">{equippedPajamas.name}</span>
+          </button>
+          <button
+            onClick={onOpenEquipmentModal}
+            className="flex items-center gap-1 bg-black/60 hover:bg-purple-900/60 border border-white/10 hover:border-purple-400/50 px-2 py-0.5 rounded-full text-[10px] text-slate-300 transition active:scale-95 shadow-sm"
+            title="Đổi Bạn Đồng Hành"
+          >
+            <span>{equippedCompanion.icon}</span>
+            <span className="font-medium text-white truncate max-w-[70px] sm:max-w-none">{equippedCompanion.name}</span>
+          </button>
         </div>
 
         {/* Status Pill below bed */}
-        <div className="mt-3 sm:mt-4 flex items-center gap-1.5 sm:gap-2 bg-slate-900/85 backdrop-blur-md px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-white/10 shadow-lg text-[10px] sm:text-xs">
-          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping" />
+        <div className="mt-2 flex items-center gap-1.5 sm:gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 shadow-lg text-[10px] sm:text-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
           <span className="text-slate-300">
-            {isSleeping ? 'Đang trong phiên ngủ...' : 'Sẵn sàng chìm vào giấc ngủ'}
+            {isSleeping ? 'Đang trong phiên ngủ sâu...' : 'Sẵn sàng chìm vào giấc ngủ'}
           </span>
           <span className="text-slate-500">•</span>
           <span className="text-amber-300 font-medium">{location.nameVi}</span>
