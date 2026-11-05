@@ -10,6 +10,18 @@ class SoundEngine {
   private activeIntervals: number[] = [];
   private isRunning: boolean = false;
 
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const unlock = () => {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      };
+      window.addEventListener('touchstart', unlock, { passive: true });
+      window.addEventListener('click', unlock, { passive: true });
+    }
+  }
+
   private initContext() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;

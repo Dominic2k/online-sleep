@@ -37,53 +37,138 @@ import {
   Users,
   Volume2,
   VolumeX,
-  ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Share2
 } from 'lucide-react';
 
+const STORAGE_KEY = 'sleep_online_v1_save';
+
 export function App() {
-  // 1. Core State
-  const [currentLocation, setCurrentLocation] = useState<LocationInfo>(LOCATIONS[0]);
+  // Helper to load stored state
+  const getSavedData = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
+  const saved = getSavedData();
+
+  // 1. Core State with LocalStorage restoration
+  const [currentLocation, setCurrentLocation] = useState<LocationInfo>(() => {
+    if (saved?.locationId) {
+      const found = LOCATIONS.find(l => l.id === saved.locationId);
+      if (found) return found;
+    }
+    return LOCATIONS[0];
+  });
 
   // Equipment selection
-  const [equippedBed, setEquippedBed] = useState<EquipmentItem>(
-    EQUIPMENT_ITEMS.find(i => i.id === 'bed-vintage-wood')!
-  );
-  const [equippedPillow, setEquippedPillow] = useState<EquipmentItem>(
-    EQUIPMENT_ITEMS.find(i => i.id === 'pillow-cloud-feather')!
-  );
-  const [equippedBlanket, setEquippedBlanket] = useState<EquipmentItem>(
-    EQUIPMENT_ITEMS.find(i => i.id === 'blanket-wool')!
-  );
-  const [equippedPajamas, setEquippedPajamas] = useState<EquipmentItem>(
-    EQUIPMENT_ITEMS.find(i => i.id === 'pj-stripes')!
-  );
-  const [equippedCompanion, setEquippedCompanion] = useState<EquipmentItem>(
-    EQUIPMENT_ITEMS.find(i => i.id === 'pet-cat')!
-  );
+  const [equippedBed, setEquippedBed] = useState<EquipmentItem>(() => {
+    if (saved?.bedId) {
+      const found = EQUIPMENT_ITEMS.find(i => i.id === saved.bedId);
+      if (found) return found;
+    }
+    return EQUIPMENT_ITEMS.find(i => i.id === 'bed-vintage-wood')!;
+  });
+
+  const [equippedPillow, setEquippedPillow] = useState<EquipmentItem>(() => {
+    if (saved?.pillowId) {
+      const found = EQUIPMENT_ITEMS.find(i => i.id === saved.pillowId);
+      if (found) return found;
+    }
+    return EQUIPMENT_ITEMS.find(i => i.id === 'pillow-cloud-feather')!;
+  });
+
+  const [equippedBlanket, setEquippedBlanket] = useState<EquipmentItem>(() => {
+    if (saved?.blanketId) {
+      const found = EQUIPMENT_ITEMS.find(i => i.id === saved.blanketId);
+      if (found) return found;
+    }
+    return EQUIPMENT_ITEMS.find(i => i.id === 'blanket-wool')!;
+  });
+
+  const [equippedPajamas, setEquippedPajamas] = useState<EquipmentItem>(() => {
+    if (saved?.pajamasId) {
+      const found = EQUIPMENT_ITEMS.find(i => i.id === saved.pajamasId);
+      if (found) return found;
+    }
+    return EQUIPMENT_ITEMS.find(i => i.id === 'pj-stripes')!;
+  });
+
+  const [equippedCompanion, setEquippedCompanion] = useState<EquipmentItem>(() => {
+    if (saved?.companionId) {
+      const found = EQUIPMENT_ITEMS.find(i => i.id === saved.companionId);
+      if (found) return found;
+    }
+    return EQUIPMENT_ITEMS.find(i => i.id === 'pet-cat')!;
+  });
 
   // Environment
-  const [weather, setWeather] = useState<WeatherType>(currentLocation.defaultWeather);
-  const [lighting, setLighting] = useState<LightingType>(currentLocation.defaultLighting);
-  const [soundVolumes, setSoundVolumes] = useState<Record<SoundTrackId, number>>({
-    rain: 60,
-    thunder: 0,
-    waves: 0,
-    campfire: 0,
-    forest: 0,
-    clock: 20,
-    lofi: 40,
-    whitenoise: 10
+  const [weather, setWeather] = useState<WeatherType>(() => saved?.weather || currentLocation.defaultWeather);
+  const [lighting, setLighting] = useState<LightingType>(() => saved?.lighting || currentLocation.defaultLighting);
+  const [soundVolumes, setSoundVolumes] = useState<Record<SoundTrackId, number>>(() => {
+    if (saved?.soundVolumes) return saved.soundVolumes;
+    return {
+      rain: 60,
+      thunder: 0,
+      waves: 0,
+      campfire: 0,
+      forest: 0,
+      clock: 20,
+      lofi: 40,
+      whitenoise: 10
+    };
   });
 
   // Sound active status
   const [isAudioActive, setIsAudioActive] = useState(false);
 
   // User Progression
-  const [userLevel, setUserLevel] = useState(1);
-  const [totalExp, setTotalExp] = useState(120);
-  const [stamps, setStamps] = useState<PassportStamp[]>([
-    { locationId: 'attic', unlockedAt: '2026-11-04', sleepMinutes: 480 }
+  const [userLevel, setUserLevel] = useState<number>(() => saved?.userLevel || 1);
+  const [totalExp, setTotalExp] = useState<number>(() => saved?.totalExp || 120);
+  const [stamps, setStamps] = useState<PassportStamp[]>(() => {
+    if (saved?.stamps && Array.isArray(saved.stamps)) return saved.stamps;
+    return [{ locationId: 'attic', unlockedAt: '2026-11-04', sleepMinutes: 480 }];
+  });
+
+  // Save changes to LocalStorage
+  useEffect(() => {
+    try {
+      const dataToSave = {
+        locationId: currentLocation.id,
+        bedId: equippedBed.id,
+        pillowId: equippedPillow.id,
+        blanketId: equippedBlanket.id,
+        pajamasId: equippedPajamas.id,
+        companionId: equippedCompanion.id,
+        weather,
+        lighting,
+        soundVolumes,
+        userLevel,
+        totalExp,
+        stamps
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch {
+      // ignore
+    }
+  }, [
+    currentLocation.id,
+    equippedBed.id,
+    equippedPillow.id,
+    equippedBlanket.id,
+    equippedPajamas.id,
+    equippedCompanion.id,
+    weather,
+    lighting,
+    soundVolumes,
+    userLevel,
+    totalExp,
+    stamps
   ]);
 
   // Sleep Session
@@ -177,6 +262,22 @@ export function App() {
     }
   };
 
+  // Web Share / Copy Link handler
+  const handleShareApp = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: 'Sleep Online – The Cozy Slumberverse',
+          text: 'Vào chọn phòng ngủ 2D, tùy chỉnh trang bị, bật tiếng mưa và cùng ngủ online nhé! 🌙💤',
+          url: window.location.href
+        })
+        .catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Đã sao chép link Sleep Online vào bộ nhớ tạm! Bạn có thể dán gửi cho bạn bè.');
+    }
+  };
+
   // Start Sleep Session
   const handleStartSleep = (mode: DurationMode) => {
     setShowSessionModal(false);
@@ -254,87 +355,94 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#090a12] text-slate-100 flex flex-col justify-between selection:bg-purple-500/30">
       {/* 1. Top Navbar */}
-      <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="border-b border-white/10 bg-slate-950/85 backdrop-blur-md sticky top-0 z-30 px-3.5 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xl shadow-lg shadow-purple-600/30 border border-purple-400/30">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-purple-600/30 border border-purple-400/30 flex-shrink-0">
             🌙
           </div>
           <div>
-            <h1 className="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-purple-200 via-white to-indigo-200 bg-clip-text text-transparent">
+            <h1 className="font-extrabold text-sm sm:text-lg tracking-tight bg-gradient-to-r from-purple-200 via-white to-indigo-200 bg-clip-text text-transparent leading-tight">
               Sleep Online
             </h1>
-            <p className="text-[10px] text-purple-300 font-mono tracking-wider -mt-0.5">
-              THE COZY SLUMBERVERSE
+            <p className="text-[9px] sm:text-[10px] text-purple-300 font-mono tracking-wider -mt-0.5">
+              SLUMBERVERSE
             </p>
           </div>
         </div>
 
         {/* Quick Nav Tools */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Level Pill */}
-          <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-slate-400">Cấp {userLevel}</span>
-            <span className="font-mono text-amber-300 font-bold">{totalExp} EXP</span>
+          <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl border border-white/10 text-[11px] sm:text-xs">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-slate-400 text-[10px] sm:text-xs">Lv.{userLevel}</span>
+            <span className="font-mono text-amber-300 font-bold text-[10px] sm:text-xs">{totalExp}</span>
           </div>
 
           {/* Quick Sound Toggle */}
           <button
             onClick={handleToggleSound}
-            className={`p-2.5 rounded-2xl border transition flex items-center gap-1.5 text-xs font-semibold ${
+            className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border transition flex items-center gap-1.5 text-xs font-semibold active:scale-95 ${
               isAudioActive
                 ? 'bg-purple-600/30 text-purple-200 border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
                 : 'bg-slate-900/60 text-slate-400 border-white/10 hover:text-white'
             }`}
             title="Bật/Tắt âm thanh môi trường Web Audio"
           >
-            {isAudioActive ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {isAudioActive ? <Volume2 size={15} /> : <VolumeX size={15} />}
             <span className="hidden md:inline">{isAudioActive ? 'Đang Phát' : 'Âm Thanh'}</span>
           </button>
 
-          {/* Sleep Roulette */}
+          {/* Share Button */}
+          <button
+            onClick={handleShareApp}
+            className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 transition active:scale-95"
+            title="Chia sẻ Sleep Online"
+          >
+            <Share2 size={15} className="text-purple-300" />
+          </button>
+
+          {/* Desktop-only Quick Buttons */}
           <button
             onClick={() => setShowRouletteModal(true)}
-            className="p-2.5 rounded-2xl bg-slate-900/60 hover:bg-fuchsia-950/40 text-slate-300 hover:text-fuchsia-300 border border-white/10 hover:border-fuchsia-500/30 transition flex items-center gap-1.5 text-xs font-semibold"
+            className="hidden md:flex p-2.5 rounded-2xl bg-slate-900/60 hover:bg-fuchsia-950/40 text-slate-300 hover:text-fuchsia-300 border border-white/10 hover:border-fuchsia-500/30 transition items-center gap-1.5 text-xs font-semibold"
             title="Quay ngẫu nhiên Sleep Roulette"
           >
             <Dices size={16} className="text-fuchsia-400" />
-            <span className="hidden md:inline">Roulette</span>
+            <span>Roulette</span>
           </button>
 
-          {/* Sleep Passport */}
           <button
             onClick={() => setShowPassportModal(true)}
-            className="p-2.5 rounded-2xl bg-slate-900/60 hover:bg-amber-950/40 text-slate-300 hover:text-amber-300 border border-white/10 hover:border-amber-500/30 transition flex items-center gap-1.5 text-xs font-semibold"
+            className="hidden md:flex p-2.5 rounded-2xl bg-slate-900/60 hover:bg-amber-950/40 text-slate-300 hover:text-amber-300 border border-white/10 hover:border-amber-500/30 transition items-center gap-1.5 text-xs font-semibold"
             title="Xem Hộ Chiếu Giấc Ngủ"
           >
             <Compass size={16} className="text-amber-400" />
-            <span className="hidden md:inline">Hộ Chiếu</span>
+            <span>Hộ Chiếu</span>
           </button>
 
-          {/* 2AM Club Multiplayer Room */}
           <button
             onClick={() => setShowRoomModal(true)}
-            className="p-2.5 rounded-2xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 hover:from-purple-900/60 hover:to-indigo-900/60 text-purple-200 border border-purple-500/30 transition flex items-center gap-1.5 text-xs font-semibold"
+            className="hidden md:flex p-2.5 rounded-2xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 hover:from-purple-900/60 hover:to-indigo-900/60 text-purple-200 border border-purple-500/30 transition items-center gap-1.5 text-xs font-semibold"
             title="Phòng ngủ online 2AM Club"
           >
             <Users size={16} className="text-indigo-400" />
-            <span className="hidden sm:inline">2AM Club</span>
+            <span>2AM Club</span>
           </button>
         </div>
       </header>
 
       {/* 2. Main Body Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-5">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-3.5 sm:p-6 space-y-4 sm:space-y-5 pb-24 md:pb-6">
         {/* Location Picker Strip */}
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <span>📍</span> Chọn Địa Điểm Ngủ (5 Locations)
+            <span className="font-semibold text-slate-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
+              <span>📍</span> Chọn Địa Điểm (5 Locations)
             </span>
-            <span className="font-mono text-[11px] text-purple-300">
-              Đang chọn: {currentLocation.nameVi}
+            <span className="font-mono text-[10px] sm:text-[11px] text-purple-300">
+              {currentLocation.nameVi}
             </span>
           </div>
           <LocationSelector
@@ -357,74 +465,125 @@ export function App() {
         />
 
         {/* Dashboard Bottom Action Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
           {/* 1. Equipment Button */}
           <button
             onClick={() => setShowEquipmentModal(true)}
-            className="p-4 rounded-3xl bg-slate-900/80 hover:bg-slate-800/80 border border-purple-500/20 hover:border-purple-500/40 text-left transition shadow-lg flex items-center justify-between group"
+            className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-900/80 hover:bg-slate-800/80 border border-purple-500/20 hover:border-purple-500/40 text-left transition shadow-lg flex items-center justify-between group active:scale-[0.99]"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl p-2.5 rounded-2xl bg-purple-500/20 border border-purple-400/30 group-hover:scale-110 transition">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <span className="text-xl sm:text-2xl p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-purple-500/20 border border-purple-400/30 group-hover:scale-105 transition flex-shrink-0">
                 🧰
               </span>
-              <div>
-                <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
+              <div className="min-w-0">
+                <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
                   Tủ Đồ Trang Bị
                   <span className="text-[10px] text-amber-300 font-mono">+{totalComfort} EXP</span>
                 </h3>
-                <p className="text-xs text-slate-400 line-clamp-1">
-                  {equippedBed.name} • {equippedPajamas.name} • {equippedCompanion.name}
+                <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+                  {equippedBed.name} • {equippedPajamas.name}
                 </p>
               </div>
             </div>
-            <ArrowRight size={18} className="text-slate-500 group-hover:text-purple-300 transition" />
+            <ArrowRight size={16} className="text-slate-500 group-hover:text-purple-300 transition flex-shrink-0 ml-1" />
           </button>
 
           {/* 2. Environment Button */}
           <button
             onClick={() => setShowEnvironmentModal(true)}
-            className="p-4 rounded-3xl bg-slate-900/80 hover:bg-slate-800/80 border border-teal-500/20 hover:border-teal-500/40 text-left transition shadow-lg flex items-center justify-between group"
+            className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-900/80 hover:bg-slate-800/80 border border-teal-500/20 hover:border-teal-500/40 text-left transition shadow-lg flex items-center justify-between group active:scale-[0.99]"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl p-2.5 rounded-2xl bg-teal-500/20 border border-teal-400/30 group-hover:scale-110 transition">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <span className="text-xl sm:text-2xl p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-teal-500/20 border border-teal-400/30 group-hover:scale-105 transition flex-shrink-0">
                 🌿
               </span>
-              <div>
-                <h3 className="font-bold text-sm text-white">Môi Trường & Âm Thanh</h3>
-                <p className="text-xs text-slate-400 line-clamp-1">
-                  Thời tiết: {weather} • Đèn: {lighting} • Sound Mixer
+              <div className="min-w-0">
+                <h3 className="font-bold text-xs sm:text-sm text-white">Môi Trường & Âm Thanh</h3>
+                <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+                  Thời tiết: {weather} • Đèn: {lighting}
                 </p>
               </div>
             </div>
-            <Sliders size={18} className="text-slate-500 group-hover:text-teal-300 transition" />
+            <Sliders size={16} className="text-slate-500 group-hover:text-teal-300 transition flex-shrink-0 ml-1" />
           </button>
 
           {/* 3. Primary Start Sleep Button */}
           <button
             onClick={() => setShowSessionModal(true)}
-            className="p-4 rounded-3xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm tracking-wide shadow-xl shadow-purple-600/30 flex items-center justify-center gap-3 transition transform active:scale-98 group"
+            className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-xl shadow-purple-600/30 flex items-center justify-center gap-2.5 sm:gap-3 transition transform active:scale-98 group"
           >
-            <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:rotate-12 transition">
-              <Moon size={22} className="text-white" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/20 flex items-center justify-center text-lg sm:text-xl group-hover:rotate-12 transition flex-shrink-0">
+              <Moon size={18} className="text-white sm:w-5 sm:h-5" />
             </div>
-            <div className="text-left">
-              <div className="text-sm font-extrabold text-white">BẮT ĐẦU NGỦ ONLINE</div>
-              <div className="text-[11px] text-purple-200/90 font-normal">
-                Vào chế độ thư giãn & tích lũy giấc mơ
+            <div className="text-left min-w-0">
+              <div className="text-xs sm:text-sm font-extrabold text-white">BẮT ĐẦU NGỦ ONLINE</div>
+              <div className="text-[10px] sm:text-[11px] text-purple-200/90 font-normal truncate">
+                Chế độ thư giãn & tích lũy giấc mơ
               </div>
             </div>
           </button>
         </div>
       </main>
 
-      {/* 3. Bottom Footer */}
-      <footer className="border-t border-white/5 py-4 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between max-w-6xl w-full mx-auto">
+      {/* 3. Mobile Bottom Navigation Dock (Visible only on mobile screens) */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#07080f]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 z-40 flex items-center justify-around text-[10px] text-slate-400 select-none shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="flex flex-col items-center gap-0.5 py-1 px-2 text-purple-300 font-semibold active:scale-90 transition"
+        >
+          <span className="text-base">🛌</span>
+          <span>Sân khấu</span>
+        </button>
+
+        <button
+          onClick={() => setShowEquipmentModal(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+        >
+          <span className="text-base">🧰</span>
+          <span>Trang bị</span>
+        </button>
+
+        <button
+          onClick={() => setShowEnvironmentModal(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+        >
+          <span className="text-base">🌿</span>
+          <span>Âm thanh</span>
+        </button>
+
+        <button
+          onClick={() => setShowRouletteModal(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+        >
+          <span className="text-base">🎲</span>
+          <span>Roulette</span>
+        </button>
+
+        <button
+          onClick={() => setShowPassportModal(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+        >
+          <span className="text-base">🛂</span>
+          <span>Hộ chiếu</span>
+        </button>
+
+        <button
+          onClick={() => setShowRoomModal(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+        >
+          <span className="text-base">👥</span>
+          <span>2AM Club</span>
+        </button>
+      </nav>
+
+      {/* 4. Bottom Footer (Desktop only) */}
+      <footer className="hidden md:flex border-t border-white/5 py-4 px-6 text-center text-xs text-slate-500 items-center justify-between max-w-6xl w-full mx-auto">
         <div className="flex items-center gap-2">
-          <span>💤 Sleep Online MVP v0.1</span>
+          <span>💤 Sleep Online v1.0</span>
           <span>•</span>
           <span className="text-slate-400">Cozy Slumber & Idle Sleep Simulator</span>
         </div>
-        <div className="mt-2 sm:mt-0 flex items-center gap-4 text-[11px] text-slate-400">
+        <div className="flex items-center gap-4 text-[11px] text-slate-400">
           <span>5 Địa Điểm 2D</span>
           <span>•</span>
           <span>22 Trang Bị</span>
@@ -543,4 +702,3 @@ export function App() {
   );
 }
 export default App;
-

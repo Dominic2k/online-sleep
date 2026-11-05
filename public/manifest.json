@@ -1,0 +1,19 @@
+{
+  "name": "Sleep Online – The Cozy Slumberverse",
+  "short_name": "Sleep Online",
+  "description": "Cozy Idle Slumber Simulator với visual 2D, âm thanh thiên nhiên Web Audio và nhịp thở 4-7-8.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0b12",
+  "theme_color": "#0a0b12",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/moon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

@@ -56,89 +56,92 @@ export const MorningReportModal: React.FC<MorningReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-xl bg-slate-900 border border-amber-500/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-xl max-h-[92vh] sm:max-h-[90vh] bg-slate-900 border border-amber-500/30 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
+        {/* Mobile drag handle */}
+        <div className="sm:hidden w-12 h-1 bg-white/20 rounded-full mx-auto mt-2 mb-1" />
+
         {/* Top Header */}
-        <div className="px-6 py-5 border-b border-white/10 bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/40 text-center">
-          <div className="inline-flex p-3 rounded-full bg-amber-500/20 border border-amber-400/30 mb-2">
-            <Sparkles size={28} className="text-amber-400" />
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10 bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/40 text-center">
+          <div className="inline-flex p-2 sm:p-3 rounded-full bg-amber-500/20 border border-amber-400/30 mb-1.5 sm:mb-2">
+            <Sparkles size={24} className="text-amber-400 sm:w-7 sm:h-7" />
           </div>
-          <h2 className="text-2xl font-extrabold text-white">Chào Buổi Sáng!</h2>
-          <p className="text-xs text-amber-200/80 mt-0.5">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white">Chào Buổi Sáng!</h2>
+          <p className="text-[11px] sm:text-xs text-amber-200/80 mt-0.5">
             Phiên ngủ của bạn đã hoàn thành trọn vẹn và an yên.
           </p>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto overscroll-contain">
           {/* 1. Time & Stats Overview */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/10 text-center">
-              <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-1">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+            <div className="bg-slate-800/50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/10 text-center">
+              <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-1">
                 Thời Gian Ngủ
               </span>
-              <span className="text-2xl font-bold font-mono text-white">
+              <span className="text-xl sm:text-2xl font-bold font-mono text-white">
                 {hours > 0 ? `${hours}h ` : ''}{minutes}m {seconds}s
               </span>
-              <span className="text-[10px] text-slate-400 block mt-1">Tại {location.nameVi}</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 block mt-0.5">Tại {location.nameVi}</span>
             </div>
 
-            <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/10 text-center">
-              <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-1">
+            <div className="bg-slate-800/50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/10 text-center">
+              <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-1">
                 Kinh Nghiệm Nhận Được
               </span>
-              <span className="text-2xl font-bold font-mono text-amber-400">
+              <span className="text-xl sm:text-2xl font-bold font-mono text-amber-400">
                 +{earnedExp} EXP
               </span>
-              <span className="text-[10px] text-amber-200/70 block mt-1">Cấp độ {currentLevel}</span>
+              <span className="text-[9px] sm:text-[10px] text-amber-200/70 block mt-0.5">Cấp độ {currentLevel}</span>
             </div>
           </div>
 
           {/* 2. Passport Stamp Notification */}
-          <div className="bg-indigo-950/40 border border-indigo-500/30 p-3.5 rounded-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl p-2 bg-indigo-900/50 rounded-xl border border-indigo-400/30">🛂</span>
-              <div>
-                <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <CheckCircle2 size={14} className="text-emerald-400" />
-                  Đóng dấu Hộ Chiếu Giấc Ngủ!
+          <div className="bg-indigo-950/40 border border-indigo-500/30 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-indigo-900/50 rounded-xl border border-indigo-400/30 flex-shrink-0">🛂</span>
+              <div className="min-w-0">
+                <div className="text-[11px] sm:text-xs font-bold text-white flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" />
+                  <span>Đóng dấu Hộ Chiếu!</span>
                 </div>
-                <div className="text-[11px] text-indigo-300">Con dấu địa điểm: {location.nameVi}</div>
+                <div className="text-[10px] sm:text-[11px] text-indigo-300 truncate">Dấu: {location.nameVi}</div>
               </div>
             </div>
             <button
               onClick={onOpenPassport}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1"
+              className="text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1 flex-shrink-0 active:scale-95"
             >
               <Compass size={12} />
-              Xem Hộ Chiếu
+              <span>Xem Sổ</span>
             </button>
           </div>
 
           {/* 3. Unlocked Dream Card */}
-          <div className={`p-5 rounded-2xl border bg-gradient-to-br ${dreamCard.rarityColor} relative overflow-hidden shadow-lg`}>
-            <div className="flex items-start justify-between mb-3">
+          <div className={`p-4 sm:p-5 rounded-2xl border bg-gradient-to-br ${dreamCard.rarityColor} relative overflow-hidden shadow-lg`}>
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-3xl">{dreamCard.emoji}</span>
+                <span className="text-2xl sm:text-3xl">{dreamCard.emoji}</span>
                 <div>
-                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-black/40 border border-white/10">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-black/40 border border-white/10">
                     {dreamCard.rarity}
                   </span>
-                  <h3 className="font-extrabold text-base text-white mt-1">{dreamCard.title}</h3>
+                  <h3 className="font-extrabold text-sm sm:text-base text-white mt-0.5 sm:mt-1">{dreamCard.title}</h3>
                 </div>
               </div>
-              <Trophy size={18} className="text-amber-400" />
+              <Trophy size={18} className="text-amber-400 flex-shrink-0" />
             </div>
 
-            <p className="text-xs text-slate-200 leading-relaxed italic bg-black/20 p-3 rounded-xl border border-white/10">
+            <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed italic bg-black/20 p-2.5 sm:p-3 rounded-xl border border-white/10">
               "{dreamCard.story}"
             </p>
 
-            <div className="mt-3 flex items-center justify-between text-[11px]">
-              <span className="text-slate-400">Thẻ Giấc Mơ #SL-{dreamCard.id.split('-')[1]}</span>
+            <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
+              <span className="text-slate-400">#SL-{dreamCard.id.split('-')[1]}</span>
               <button
                 onClick={handleShare}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition active:scale-95"
               >
                 <Share2 size={12} />
                 <span>Chia Sẻ Thẻ</span>
@@ -148,10 +151,10 @@ export const MorningReportModal: React.FC<MorningReportModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/10 bg-slate-950/70 flex justify-end">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-white/10 bg-slate-950/80 flex justify-end">
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide shadow-lg transition"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide shadow-lg transition active:scale-95"
           >
             Quay Về Phòng Ngủ
           </button>
