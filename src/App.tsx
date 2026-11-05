@@ -8,7 +8,9 @@ import {
   DurationMode,
   SleepSessionState,
   PassportStamp,
-  DreamCard
+  DreamCard,
+  UserProfile,
+  SleepHistoryRecord
 } from './types';
 import { LOCATIONS } from './data/locations';
 import { EQUIPMENT_ITEMS } from './data/equipment';
@@ -26,6 +28,7 @@ import { MorningReportModal } from './components/MorningReportModal';
 import { SleepRouletteModal } from './components/SleepRouletteModal';
 import { SleepPassportModal } from './components/SleepPassportModal';
 import { MultiplayerRoomModal } from './components/MultiplayerRoomModal';
+import { ProfileModal } from './components/ProfileModal';
 
 // Icons
 import {
@@ -44,7 +47,7 @@ import {
 const STORAGE_KEY = 'sleep_online_v1_save';
 
 export function App() {
-  // Helper to load stored state
+  // Helper to load stored state from LocalStorage
   const getSavedData = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -57,7 +60,27 @@ export function App() {
 
   const saved = getSavedData();
 
-  // 1. Core State with LocalStorage restoration
+  // 1. User Profile & Account (Persistent)
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    if (saved?.profile) return saved.profile;
+    return {
+      name: 'Người Du Hành Đêm',
+      avatarEmoji: '😌',
+      title: 'Tân Binh Ngủ Nướng',
+      joinedDate: new Date().toISOString().split('T')[0]
+    };
+  });
+
+  const [userLevel, setUserLevel] = useState<number>(() => saved?.userLevel || 1);
+  const [totalExp, setTotalExp] = useState<number>(() => saved?.totalExp || 120);
+
+  // Sleep History (Persistent)
+  const [sleepHistory, setSleepHistory] = useState<SleepHistoryRecord[]>(() => {
+    if (saved?.sleepHistory && Array.isArray(saved.sleepHistory)) return saved.sleepHistory;
+    return [];
+  });
+
+  // Location (Persistent)
   const [currentLocation, setCurrentLocation] = useState<LocationInfo>(() => {
     if (saved?.locationId) {
       const found = LOCATIONS.find(l => l.id === saved.locationId);
@@ -66,7 +89,7 @@ export function App() {
     return LOCATIONS[0];
   });
 
-  // Equipment selection
+  // Equipment selection (Persistent)
   const [equippedBed, setEquippedBed] = useState<EquipmentItem>(() => {
     if (saved?.bedId) {
       const found = EQUIPMENT_ITEMS.find(i => i.id === saved.bedId);
@@ -107,7 +130,7 @@ export function App() {
     return EQUIPMENT_ITEMS.find(i => i.id === 'pet-cat')!;
   });
 
-  // Environment
+  // Environment (Persistent)
   const [weather, setWeather] = useState<WeatherType>(() => saved?.weather || currentLocation.defaultWeather);
   const [lighting, setLighting] = useState<LightingType>(() => saved?.lighting || currentLocation.defaultLighting);
   const [soundVolumes, setSoundVolumes] = useState<Record<SoundTrackId, number>>(() => {
@@ -127,18 +150,20 @@ export function App() {
   // Sound active status
   const [isAudioActive, setIsAudioActive] = useState(false);
 
-  // User Progression
-  const [userLevel, setUserLevel] = useState<number>(() => saved?.userLevel || 1);
-  const [totalExp, setTotalExp] = useState<number>(() => saved?.totalExp || 120);
+  // Passport Stamps (Persistent)
   const [stamps, setStamps] = useState<PassportStamp[]>(() => {
     if (saved?.stamps && Array.isArray(saved.stamps)) return saved.stamps;
     return [{ locationId: 'attic', unlockedAt: '2026-11-04', sleepMinutes: 480 }];
   });
 
-  // Save changes to LocalStorage
+  // Auto-Save all changes to LocalStorage
   useEffect(() => {
     try {
       const dataToSave = {
+        profile: userProfile,
+        userLevel,
+        totalExp,
+        sleepHistory,
         locationId: currentLocation.id,
         bedId: equippedBed.id,
         pillowId: equippedPillow.id,
@@ -148,8 +173,6 @@ export function App() {
         weather,
         lighting,
         soundVolumes,
-        userLevel,
-        totalExp,
         stamps
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
@@ -157,6 +180,10 @@ export function App() {
       // ignore
     }
   }, [
+    userProfile,
+    userLevel,
+    totalExp,
+    sleepHistory,
     currentLocation.id,
     equippedBed.id,
     equippedPillow.id,
@@ -166,12 +193,10 @@ export function App() {
     weather,
     lighting,
     soundVolumes,
-    userLevel,
-    totalExp,
     stamps
   ]);
 
-  // Sleep Session
+  // Sleep Session state
   const [session, setSession] = useState<SleepSessionState>({
     status: 'idle',
     durationMode: 'hour8',
@@ -185,6 +210,7 @@ export function App() {
   const [latestEarnedExp, setLatestEarnedExp] = useState(0);
 
   // Modals
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showEquipmentModal, setShowEquipmentModal] = useState(false);
   const [showEnvironmentModal, setShowEnvironmentModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
@@ -268,7 +294,7 @@ export function App() {
       navigator
         .share({
           title: 'Sleep Online – The Cozy Slumberverse',
-          text: 'Vào chọn phòng ngủ 2D, tùy chỉnh trang bị, bật tiếng mưa và cùng ngủ online nhé! 🌙💤',
+          text: `Vào chọn phòng ngủ 2D, tùy chỉnh trang bị và ngủ cùng ${userProfile.name} tại Sleep Online nhé! 🌙💤`,
           url: window.location.href
         })
         .catch(() => {});
@@ -316,8 +342,30 @@ export function App() {
 
     // Update EXP & Level
     const newTotalExp = totalExp + calculatedExp;
+    const newLevel = Math.floor(newTotalExp / 150) + 1;
     setTotalExp(newTotalExp);
-    setUserLevel(Math.floor(newTotalExp / 150) + 1);
+    setUserLevel(newLevel);
+
+    // Record into persistent Sleep History
+    const newRecord: SleepHistoryRecord = {
+      id: `sleep-${Date.now()}`,
+      timestamp: Date.now(),
+      dateStr: new Date().toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      locationId: currentLocation.id,
+      locationName: currentLocation.nameVi,
+      durationMinutes: elapsedMinutes,
+      earnedExp: calculatedExp,
+      dreamTitle: randomDream.title,
+      dreamEmoji: randomDream.emoji,
+      dreamRarity: randomDream.rarity
+    };
+    setSleepHistory(prev => [newRecord, ...prev]);
 
     // Unlock or update stamp
     setStamps(prev => {
@@ -343,6 +391,22 @@ export function App() {
     setShowMorningReportModal(true);
   };
 
+  // Reset entire profile and state
+  const handleResetData = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setUserLevel(1);
+    setTotalExp(120);
+    setSleepHistory([]);
+    setStamps([{ locationId: 'attic', unlockedAt: new Date().toISOString().split('T')[0], sleepMinutes: 480 }]);
+    setUserProfile({
+      name: 'Người Du Hành Đêm',
+      avatarEmoji: '😌',
+      title: 'Tân Binh Ngủ Nướng',
+      joinedDate: new Date().toISOString().split('T')[0]
+    });
+    alert('Đã xóa dữ liệu cục bộ và đặt lại từ đầu!');
+  };
+
   // Equipment Item select
   const handleSelectEquipment = (item: EquipmentItem) => {
     if (item.category === 'bed') setEquippedBed(item);
@@ -355,31 +419,45 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#090a12] text-slate-100 flex flex-col justify-between selection:bg-purple-500/30">
       {/* 1. Top Navbar */}
-      <header className="border-b border-white/10 bg-slate-950/85 backdrop-blur-md sticky top-0 z-30 px-3.5 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-purple-600/30 border border-purple-400/30 flex-shrink-0">
+      <header className="border-b border-white/10 bg-slate-950/85 backdrop-blur-md sticky top-0 z-30 px-3 sm:px-8 py-2 sm:py-3 flex items-center justify-between">
+        {/* Brand & User Profile Button */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-base sm:text-xl shadow-lg shadow-purple-600/30 border border-purple-400/30 flex-shrink-0">
             🌙
           </div>
           <div>
-            <h1 className="font-extrabold text-sm sm:text-lg tracking-tight bg-gradient-to-r from-purple-200 via-white to-indigo-200 bg-clip-text text-transparent leading-tight">
+            <h1 className="font-extrabold text-xs sm:text-base tracking-tight bg-gradient-to-r from-purple-200 via-white to-indigo-200 bg-clip-text text-transparent leading-tight">
               Sleep Online
             </h1>
-            <p className="text-[9px] sm:text-[10px] text-purple-300 font-mono tracking-wider -mt-0.5">
+            <p className="text-[9px] text-purple-300 font-mono tracking-wider -mt-0.5">
               SLUMBERVERSE
             </p>
           </div>
         </div>
 
-        {/* Quick Nav Tools */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Level Pill */}
-          <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl border border-white/10 text-[11px] sm:text-xs">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-slate-400 text-[10px] sm:text-xs">Lv.{userLevel}</span>
-            <span className="font-mono text-amber-300 font-bold text-[10px] sm:text-xs">{totalExp}</span>
+        {/* User Account / Profile Badge (Clickable to open ProfileModal) */}
+        <button
+          onClick={() => setShowProfileModal(true)}
+          className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/90 hover:bg-purple-950/40 p-1 sm:py-1.5 sm:px-3 rounded-xl sm:rounded-2xl border border-white/10 hover:border-purple-400/40 transition active:scale-95 group text-left"
+          title="Xem hồ sơ & lịch sử giấc ngủ"
+        >
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-sm sm:text-base group-hover:scale-105 transition flex-shrink-0">
+            {userProfile.avatarEmoji}
           </div>
+          <div className="min-w-0 pr-1">
+            <div className="font-bold text-[11px] sm:text-xs text-white truncate max-w-[85px] sm:max-w-[120px]">
+              {userProfile.name}
+            </div>
+            <div className="text-[9px] sm:text-[10px] text-amber-300 font-mono flex items-center gap-1">
+              <span>Lv.{userLevel}</span>
+              <span className="text-slate-500">•</span>
+              <span>{totalExp} EXP</span>
+            </div>
+          </div>
+        </button>
 
+        {/* Quick Nav Tools */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Quick Sound Toggle */}
           <button
             onClick={handleToggleSound}
@@ -529,7 +607,7 @@ export function App() {
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#07080f]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 z-40 flex items-center justify-around text-[10px] text-slate-400 select-none shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex flex-col items-center gap-0.5 py-1 px-2 text-purple-300 font-semibold active:scale-90 transition"
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 text-purple-300 font-semibold active:scale-90 transition"
         >
           <span className="text-base">🛌</span>
           <span>Sân khấu</span>
@@ -537,7 +615,7 @@ export function App() {
 
         <button
           onClick={() => setShowEquipmentModal(true)}
-          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 hover:text-white active:scale-90 transition"
         >
           <span className="text-base">🧰</span>
           <span>Trang bị</span>
@@ -545,7 +623,7 @@ export function App() {
 
         <button
           onClick={() => setShowEnvironmentModal(true)}
-          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 hover:text-white active:scale-90 transition"
         >
           <span className="text-base">🌿</span>
           <span>Âm thanh</span>
@@ -553,7 +631,7 @@ export function App() {
 
         <button
           onClick={() => setShowRouletteModal(true)}
-          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 hover:text-white active:scale-90 transition"
         >
           <span className="text-base">🎲</span>
           <span>Roulette</span>
@@ -561,7 +639,7 @@ export function App() {
 
         <button
           onClick={() => setShowPassportModal(true)}
-          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 hover:text-white active:scale-90 transition"
         >
           <span className="text-base">🛂</span>
           <span>Hộ chiếu</span>
@@ -569,10 +647,18 @@ export function App() {
 
         <button
           onClick={() => setShowRoomModal(true)}
-          className="flex flex-col items-center gap-0.5 py-1 px-2 hover:text-white active:scale-90 transition"
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 hover:text-white active:scale-90 transition"
         >
           <span className="text-base">👥</span>
           <span>2AM Club</span>
+        </button>
+
+        <button
+          onClick={() => setShowProfileModal(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-1.5 hover:text-white active:scale-90 transition"
+        >
+          <span className="text-base">{userProfile.avatarEmoji}</span>
+          <span>Hồ sơ</span>
         </button>
       </nav>
 
@@ -581,18 +667,32 @@ export function App() {
         <div className="flex items-center gap-2">
           <span>💤 Sleep Online v1.0</span>
           <span>•</span>
-          <span className="text-slate-400">Cozy Slumber & Idle Sleep Simulator</span>
+          <span className="text-slate-400">Tài khoản: {userProfile.name} (Lv.{userLevel})</span>
         </div>
         <div className="flex items-center gap-4 text-[11px] text-slate-400">
           <span>5 Địa Điểm 2D</span>
           <span>•</span>
           <span>22 Trang Bị</span>
           <span>•</span>
-          <span>Web Audio Engine</span>
+          <span>Lưu Trữ LocalStorage</span>
         </div>
       </footer>
 
       {/* --- MODALS & OVERLAYS --- */}
+
+      {/* User Profile & Sleep History Modal */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        profile={userProfile}
+        onUpdateProfile={setUserProfile}
+        userLevel={userLevel}
+        totalExp={totalExp}
+        history={sleepHistory}
+        onResetData={handleResetData}
+        totalLocationsUnlocked={stamps.length}
+        totalLocationsCount={LOCATIONS.length}
+      />
 
       {/* Equipment Drawer */}
       <EquipmentModal
@@ -695,8 +795,8 @@ export function App() {
       <MultiplayerRoomModal
         isOpen={showRoomModal}
         onClose={() => setShowRoomModal(false)}
-        userAvatar={equippedPajamas.icon}
-        userName="Bạn (Người Du Hành Đêm)"
+        userAvatar={userProfile.avatarEmoji}
+        userName={userProfile.name}
       />
     </div>
   );

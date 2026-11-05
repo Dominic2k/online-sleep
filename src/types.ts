@@ -78,3 +78,23 @@ export interface RoomPeer {
   likes: number;
 }
 
+export interface UserProfile {
+  name: string;
+  avatarEmoji: string;
+  title: string;
+  joinedDate: string;
+}
+
+export interface SleepHistoryRecord {
+  id: string;
+  timestamp: number;
+  dateStr: string;
+  locationId: LocationId;
+  locationName: string;
+  durationMinutes: number;
+  earnedExp: number;
+  dreamTitle: string;
+  dreamEmoji: string;
+  dreamRarity: string;
+}
+
